@@ -1,0 +1,91 @@
+import { createCanvas, loadImage, registerFont } from 'canvas';
+import { loadSettings } from '../../lib/settingsManager.js';
+
+export default {
+  name: 'qc',
+  aliases: ['quotechat', 'quote'],
+  category: 'maker',
+  description: 'Create quote chat sticker',
+  usage: '.qc <text>',
+  
+  async execute(context) {
+    const { args, reply, sock, from, msg, sender } = context;
+    const settings = loadSettings();
+    
+    if (args.length === 0) {
+      return await reply('❌ Usage: .qc <text>');
+    }
+
+    const text = args.join(' ');
+
+    try {
+      await reply('⏳ Creating quote...');
+
+      // Get sender info
+      const pushname = msg.pushName || 'User';
+      let ppUrl;
+      try {
+        ppUrl = await sock.profilePictureUrl(sender, 'image');
+      } catch {
+        ppUrl = 'https://i.ibb.co/3Fh9V6p/avatar-contact.png';
+      }
+
+      // Create canvas
+      const canvas = createCanvas(512, 512);
+      const ctx = canvas.getContext('2d');
+
+      // Background
+      ctx.fillStyle = '#1f1f1f';
+      ctx.fillRect(0, 0, 512, 512);
+
+      // Load profile picture
+      const avatar = await loadImage(ppUrl);
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(80, 80, 40, 0, Math.PI * 2);
+      ctx.closePath();
+      ctx.clip();
+      ctx.drawImage(avatar, 40, 40, 80, 80);
+      ctx.restore();
+
+      // Name
+      ctx.fillStyle = '#00ff00';
+      ctx.font = 'bold 24px Arial';
+      ctx.fillText(pushname, 140, 70);
+
+      // Text bubble
+      ctx.fillStyle = '#2f2f2f';
+      ctx.roundRect(40, 140, 432, 300, 20);
+      ctx.fill();
+
+      // Message text
+      ctx.fillStyle = '#ffffff';
+      ctx.font = '20px Arial';
+      const words = text.split(' ');
+      let line = '';
+      let y = 180;
+
+      for (const word of words) {
+        const testLine = line + word + ' ';
+        if (ctx.measureText(testLine).width > 380 && line !== '') {
+          ctx.fillText(line, 60, y);
+          line = word + ' ';
+          y += 30;
+        } else {
+          line = testLine;
+        }
+      }
+      ctx.fillText(line, 60, y);
+
+      const buffer = canvas.toBuffer('image/png');
+
+      await sock.sendMessage(from, {
+        image: buffer,
+        caption: `📝 Quote Chat\n\n${settings.identity.footerText}`
+      }, { quoted: msg });
+
+    } catch (error) {
+      await reply(`❌ Error: ${error.message}`);
+    }
+  }
+};

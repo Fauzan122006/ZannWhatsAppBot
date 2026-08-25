@@ -1,0 +1,37 @@
+# Ignore dependencies
+node_modules/
+
+# Ignore session data
+sessions/
+database/
+
+# Ignore logs
+logs/
+*.log
+
+# Ignore environment files
+.env
+.env.local
+
+# Ignore OS files
+.DS_Store
+Thumbs.db
+
+# Ignore IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Ignore temporary files
+tmp/
+temp/
+
+# Ignore build files
+dist/
+build/
+
+# Keep empty folders
+!sessions/.gitkeep
+!database/.gitkeep
+!logs/.gitkeep

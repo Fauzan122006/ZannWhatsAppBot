@@ -1,0 +1,41 @@
+{
+  "watermark": {
+    "packname": "🚀 Zann Bot",
+    "author": "Enterprise Manager",
+    "url": "https://wabot.codefauzan.my.id"
+  },
+  "identity": {
+    "botName": "Zann Multi-Bot",
+    "ownerName": "Fauzan",
+    "ownerNumber": "6282250228360",
+    "footerText": "© 2025 Zann Enterprise | Multi-Bot Manager"
+  },
+  "behavior": {
+    "autoRead": true,
+    "autoTyping": true,
+    "welcomeMessage": true,
+    "antiCall": true,
+    "allowedPrefixes": [".", "!", "/", "#"]
+  },
+  "features": {
+    "ai": true,
+    "downloader": true,
+    "maker": true,
+    "group": true,
+    "islamic": true,
+    "news": true,
+    "entertainment": true,
+    "tools": true
+  },
+  "apiKeys": {
+    "openai": "sk-your-openai-key",
+    "gemini": "your-gemini-key",
+    "removebg": "your-removebg-key",
+    "weatherapi": "your-weatherapi-key"
+  },
+  "dashboard": {
+    "port": 3001,
+    "username": "admin",
+    "password": "zann2025"
+  }
+}

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Logs - Zann Multi-Bot Manager</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.socket.io/4.6.0/socket.io.min.js"></script>
+  <style>
+    body { background: #0f0f1e; color: #e0e0e0; }
+    .glass { background: rgba(30, 30, 50, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+    .sidebar { background: linear-gradient(135deg, #1e1e3f 0%, #2d2d5f 100%); }
+    #logContainer { max-height: 600px; overflow-y: auto; }
+  </style>
+</head>
+<body>
+  <div class="flex h-screen">
+    <%- include('partials/sidebar') %>
+
+    <div class="flex-1 p-8 overflow-y-auto">
+      <div class="flex items-center justify-between mb-8">
+        <h1 class="text-3xl font-bold text-white">📝 Live Logs</h1>
+        <button onclick="clearLogs()" class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition">
+          🗑️ Clear Logs
+        </button>
+      </div>
+
+      <div class="glass rounded-xl p-6">
+        <div id="logContainer" class="space-y-2 font-mono text-sm">
+          <div class="text-white/60">Waiting for logs...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const socket = io();
+    const logContainer = document.getElementById('logContainer');
+
+    socket.on('commandLog', (data) => {
+      const time = new Date(data.timestamp).toLocaleTimeString();
+      const log = document.createElement('div');
+      log.className = 'text-white/80';
+      log.innerHTML = `<span class="text-green-400">[${time}]</span> <span class="text-blue-400">${data.instanceId}</span> - Command: <span class="text-yellow-400">${data.command}</span> by ${data.from}`;
+      
+      if (logContainer.firstChild.textContent === 'Waiting for logs...') {
+        logContainer.innerHTML = '';
+      }
+      
+      logContainer.insertBefore(log, logContainer.firstChild);
+      
+      if (logContainer.children.length > 100) {
+        logContainer.removeChild(logContainer.lastChild);
+      }
+    });
+
+    socket.on('error', (data) => {
+      const time = new Date(data.timestamp).toLocaleTimeString();
+      const log = document.createElement('div');
+      log.className = 'text-red-400';
+      log.innerHTML = `<span class="text-red-400">[${time}]</span> <span class="text-blue-400">${data.instanceId}</span> - Error: ${data.error}`;
+      
+      if (logContainer.firstChild.textContent === 'Waiting for logs...') {
+        logContainer.innerHTML = '';
+      }
+      
+      logContainer.insertBefore(log, logContainer.firstChild);
+    });
+
+    function clearLogs() {
+      logContainer.innerHTML = '<div class="text-white/60">Logs cleared. Waiting for new logs...</div>';
+    }
+  </script>
+</body>
+</html>

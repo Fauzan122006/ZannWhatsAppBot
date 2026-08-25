@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Broadcast - Zann Multi-Bot Manager</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { background: #0f0f1e; color: #e0e0e0; }
+    .glass { background: rgba(30, 30, 50, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+    .sidebar { background: linear-gradient(135deg, #1e1e3f 0%, #2d2d5f 100%); }
+  </style>
+</head>
+<body>
+  <div class="flex h-screen">
+    <%- include('partials/sidebar') %>
+
+    <div class="flex-1 p-8 overflow-y-auto">
+      <h1 class="text-3xl font-bold text-white mb-8">📢 Broadcast Manager</h1>
+
+      <div class="glass rounded-xl p-6">
+        <form id="broadcastForm" class="space-y-6">
+          <div>
+            <label class="block text-white mb-2">Select Instance</label>
+            <select name="instanceId" required class="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white">
+              <% instances.forEach(instance => { %>
+                <option value="<%= instance.id %>"><%= instance.name %> (<%= instance.status %>)</option>
+              <% }); %>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-white mb-2">Message Type</label>
+            <select name="type" required class="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white">
+              <option value="text">Text Only</option>
+              <option value="image">Image with Caption</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-white mb-2">Message</label>
+            <textarea name="message" required rows="6" 
+                      class="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white"
+                      placeholder="Enter your broadcast message..."></textarea>
+          </div>
+
+          <div id="mediaUrlDiv" style="display: none;">
+            <label class="block text-white mb-2">Image URL</label>
+            <input type="url" name="mediaUrl" 
+                   class="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white"
+                   placeholder="https://example.com/image.jpg">
+          </div>
+
+          <div>
+            <label class="block text-white mb-2">Target Numbers (one per line)</label>
+            <textarea name="targets" required rows="8" 
+                      class="w-full px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white"
+                      placeholder="6281234567890&#10;6289876543210"></textarea>
+          </div>
+
+          <button type="submit" class="w-full px-6 py-3 bg-green-500 hover:bg-green-600 text-white font-bold rounded-lg transition">
+            🚀 Send Broadcast
+          </button>
+        </form>
+
+        <div id="result" class="mt-6 hidden glass rounded-lg p-4">
+          <h3 class="text-white font-bold mb-2">Results:</h3>
+          <div id="resultContent" class="text-white/80"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.querySelector('[name="type"]').addEventListener('change', (e) => {
+      document.getElementById('mediaUrlDiv').style.display = 
+        e.target.value === 'image' ? 'block' : 'none';
+    });
+
+    document.getElementById('broadcastForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const formData = new FormData(e.target);
+      const data = {
+        instanceId: formData.get('instanceId'),
+        type: formData.get('type'),
+        message: formData.get('message'),
+        mediaUrl: formData.get('mediaUrl'),
+        targets: formData.get('targets').split('\n')
+          .map(n => n.trim())
+          .filter(n => n)
+          .map(n => n + '@s.whatsapp.net')
+      };
+
+      if (data.targets.length === 0) {
+        alert('Please enter at least one target number!');
+        return;
+      }
+
+      if (!confirm(`Send broadcast to ${data.targets.length} numbers?`)) return;
+
+      const btn = e.target.querySelector('button[type="submit"]');
+      btn.disabled = true;
+      btn.textContent = '⏳ Sending...';
+
+      try {
+        const response = await fetch('/broadcast/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        
+        if (result.success) {
+          const success = result.result.filter(r => r.success).length;
+          const failed = result.result.length - success;
+          
+          document.getElementById('result').classList.remove('hidden');
+          document.getElementById('resultContent').innerHTML = 
+            `✅ Success: ${success}<br>❌ Failed: ${failed}`;
+        } else {
+          alert('Error: ' + result.message);
+        }
+      } catch (error) {
+        alert('Error: ' + error.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '🚀 Send Broadcast';
+      }
+    });
+  </script>
+</body>
+</html>

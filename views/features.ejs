@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Features - Zann Multi-Bot Manager</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { background: #0f0f1e; color: #e0e0e0; }
+    .glass { background: rgba(30, 30, 50, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+    .sidebar { background: linear-gradient(135deg, #1e1e3f 0%, #2d2d5f 100%); }
+  </style>
+</head>
+<body>
+  <div class="flex h-screen">
+    <%- include('partials/sidebar') %>
+
+    <div class="flex-1 p-8 overflow-y-auto">
+      <h1 class="text-3xl font-bold text-white mb-8">🎯 Feature Manager</h1>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <% for (const [category, commands] of Object.entries(features)) { %>
+          <div class="glass rounded-xl p-6">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-xl font-bold text-white capitalize"><%= category %></h2>
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" class="sr-only peer" 
+                       data-category="<%= category %>"
+                       <%= settings.features[category] ? 'checked' : '' %>
+                       onchange="toggleCategory(this)">
+                <div class="w-11 h-6 bg-gray-600 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
+              </label>
+            </div>
+
+            <div class="space-y-2 text-white/70 text-sm">
+              <% commands.slice(0, 10).forEach(cmd => { %>
+                <div class="flex items-center space-x-2">
+                  <span class="text-green-400">•</span>
+                  <span><%= cmd.name %></span>
+                </div>
+              <% }); %>
+              <% if (commands.length > 10) { %>
+                <div class="text-white/50">+ <%= commands.length - 10 %> more commands</div>
+              <% } %>
+            </div>
+
+            <div class="mt-4 pt-4 border-t border-white/10">
+              <div class="text-white/60 text-sm">
+                Total: <%= commands.length %> commands
+              </div>
+            </div>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    async function toggleCategory(checkbox) {
+      const category = checkbox.dataset.category;
+      const enabled = checkbox.checked;
+
+      try {
+        const response = await fetch('/features/toggle', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ category, enabled })
+        });
+
+        const result = await response.json();
+        if (!result.success) {
+          alert('Error: ' + result.message);
+          checkbox.checked = !enabled;
+        }
+      } catch (error) {
+        alert('Error: ' + error.message);
+        checkbox.checked = !enabled;
+      }
+    }
+  </script>
+</body>
+</html>
